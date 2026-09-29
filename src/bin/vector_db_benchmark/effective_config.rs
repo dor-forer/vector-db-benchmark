@@ -168,6 +168,8 @@ const DECLARED_KEY_ALLOWLIST: &[&str] = &[
     "ef_construct",
     "ef_construction",
     "EF_CONSTRUCTION",
+    "COMPRESSION",
+    "TRAINING_THRESHOLD",
     "efConstruction",
     "maxConnections",
     "on_disk",
@@ -2968,6 +2970,31 @@ mod tests {
             .as_str()
             .unwrap()
             .contains("KNOWN_UNREAD"));
+    }
+
+    #[test]
+    fn redis_sq8_declared_values_are_preserved_and_not_ignored() {
+        let _lock = test_lock();
+        let raw = json!({
+            "name": "redis-sq8-provenance",
+            "engine": "redis",
+            "algorithm": "hnsw",
+            "collection_params": {
+                "hnsw_config": {
+                    "M": 16,
+                    "COMPRESSION": "SQ8",
+                    "TRAINING_THRESHOLD": 0
+                }
+            }
+        });
+        let mut cfg: crate::config::EngineConfig = serde_json::from_value(raw.clone()).unwrap();
+        cfg.raw = Some(raw);
+        let _recording = begin_experiment(&cfg, json!({}));
+        let recorded = snapshot();
+        let hnsw = &recorded["declared"]["collection_params"]["hnsw_config"];
+        assert_eq!(hnsw["COMPRESSION"], "SQ8");
+        assert_eq!(hnsw["TRAINING_THRESHOLD"], 0);
+        assert_eq!(recorded["ignored_declared_keys"]["keys"], json!([]));
     }
 
     /// The plain-token alphabet is a decision, not an accident.

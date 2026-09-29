@@ -1345,8 +1345,7 @@ fn any_locally_present_shipped_dataset_emits_only_known_shapes() {
                     let Ok(cond) = serde_json::from_str::<Value>(slice) else {
                         continue;
                     };
-                    // Null and empty objects both mean an unfiltered query.
-                    if cond.is_null() || cond.as_object().is_some_and(|obj| obj.is_empty()) {
+                    if cond.is_null() {
                         continue;
                     }
                     let sig = shape_signature(&cond);

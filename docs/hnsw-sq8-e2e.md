@@ -1,6 +1,6 @@
 # HNSW SQ8 end-to-end benchmarks
 
-Use `experiments/configurations/redis-hnsw-sq8.json` with a Redis Search build
+Use `experiments/configurations/redis-hnsw-sq8-k10.json` with a Redis Search build
 that supports HNSW `COMPRESSION SQ8`. The Rust Redis adapter reads compression
 and training threshold from `collection_params.hnsw_config`, sends them to
 `FT.CREATE`, and verifies the server's `FT.INFO` attributes before uploading.
@@ -11,26 +11,21 @@ Unsupported servers fail explicitly.
 The six configurations compare uncompressed HNSW, SQ8 with threshold 0, and SQ8
 with learned-mean threshold 10240, separately for FLOAT32 and FLOAT16 input.
 All use M=32, EF_CONSTRUCTION=200, upload parallelism 8 and batches of 64.
-The primary file explicitly requests k=100; `redis-hnsw-sq8-k10.json` provides
-matching k=10 cases for narrower ground truth. Both sweep ef=100/200/400/800/1600, and use
-1/8/100 clients. These are starting settings, not claimed optimal settings.
+The configurations explicitly request k=10, sweep ef=100/200/400/800/1600,
+and use 1/8/100 clients. These are starting settings, not claimed optimal settings.
 
 This follows the published SVS benchmark's comparison of index memory, total
 Redis memory, ingestion, throughput, latency and accuracy. It does not reproduce
 the original host or every original parameter:
 https://redis.io/blog/tech-dive-comprehensive-compression-leveraging-quantization-and-dimensionality-reduction/
 
-## Dataset stages
+## Initial dataset
 
-1. First real-data check: `dbpedia-openai-100K-1536-angular`, the full registered
-   100K corpus and its own ground truth (10 neighbors per query; use the k10 file).
-2. Representative runs: `cohere-768-1M` and
-   `dbpedia-openai-1M-1536-angular-100neighbors`.
-3. The ticket's 64D and 128D datasets and additional sizes still need selection
-   and registration. Synthetic low-dimensional tests must be labelled synthetic.
+Use `dbpedia-openai-100K-1536-angular`: the full registered 100K corpus and
+its own ground truth, with 10 neighbors per query. This PR provides the k=10
+starting matrix. Wider-k configurations and the remaining dimensionality/size
+matrix belong to follow-up benchmark work.
 
-The registered 100K and 1M DBpedia families use different embedding models.
-Do not treat their measurements as scaling results for the same corpus.
 Never use `--upload-end-idx` to shrink a corpus while retaining its full-corpus
 nearest-neighbor ground truth. Do not truncate or pad vectors to change dimension.
 For FLOAT16, report accuracy against the dataset's original ground truth as
@@ -95,9 +90,7 @@ throughput differences. Repeat graph construction as well as searches.
 
 Use `mean_recall`, not `mean_precision_at_returned`, for recall@k. Require at
 least k valid ground-truth neighbors in every measured query. In particular,
-use k=10 for the first DBpedia 100K dataset and k=100 only with sufficiently
-wide ground truth. Reject a
-measurement with dropped queries, partial corpus, schema mismatch, indexing
+use k=10 for DBpedia 100K. Reject a measurement with dropped queries, partial corpus, schema mismatch, indexing
 errors or incomplete backend migration. Report both matching-parameter results
 and the best measured QPS meeting each recall target (for example 0.95 and 0.99);
 report an unreachable target rather than extrapolating a crossing.
@@ -105,7 +98,7 @@ report an unreachable target rather than extrapolating a crossing.
 Compute vector-index compression as baseline `vector_index_sz_mb` divided by
 SQ8 `vector_index_sz_mb`. Report total Redis memory separately: stored HASH
 vectors remain full precision. Report ingestion through backend completion,
-QPS, p50/p95/p99 latency and recall@100 for each configuration.
+QPS, p50/p95/p99 latency and recall@10 for each configuration.
 
 Performance regression thresholds must be calibrated from repeated controls;
 the first smoke run does not establish them. The separate transition workload
@@ -122,3 +115,8 @@ test instance; run them before loading benchmark data. The SQ8 test is a
 separate opt-in because the default Redis image may predate HNSW SQ8 support.
 It asserts server-reported compression and thresholds 0 and 4, and uploads
 enough vectors to cross the learned threshold.
+
+The existing downloaded-dataset shape test rejects DBpedia's empty filter
+objects (`conditions: {}`). Its independent fix is outside this PR. The standard
+clean-checkout gate does not exercise that downloaded corpus; do not report it
+as dataset coverage.

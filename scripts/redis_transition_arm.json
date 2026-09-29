@@ -1,0 +1,84 @@
+{
+  "cases": [
+    {
+      "name": "hnsw",
+      "algorithm": "HNSW",
+      "create_params": {
+        "M": 32,
+        "EF_CONSTRUCTION": 200
+      },
+      "expected_schema": {
+        "m": 32,
+        "ef_construction": 200
+      },
+      "expected_pre": "ready",
+      "query_param": {
+        "name": "EF_RUNTIME",
+        "value": 400
+      }
+    },
+    {
+      "name": "hnsw-sq8-zero",
+      "algorithm": "HNSW",
+      "create_params": {
+        "M": 32,
+        "EF_CONSTRUCTION": 200,
+        "COMPRESSION": "SQ8",
+        "TRAINING_THRESHOLD": 0
+      },
+      "expected_schema": {
+        "m": 32,
+        "ef_construction": 200,
+        "compression": "SQ8",
+        "training_threshold": 0
+      },
+      "expected_pre": "ready",
+      "query_param": {
+        "name": "EF_RUNTIME",
+        "value": 400
+      }
+    },
+    {
+      "name": "hnsw-sq8-trained",
+      "algorithm": "HNSW",
+      "create_params": {
+        "M": 32,
+        "EF_CONSTRUCTION": 200,
+        "COMPRESSION": "SQ8",
+        "TRAINING_THRESHOLD": 10240
+      },
+      "expected_schema": {
+        "m": 32,
+        "ef_construction": 200,
+        "compression": "SQ8",
+        "training_threshold": 10240
+      },
+      "expected_pre": "accumulating",
+      "query_param": {
+        "name": "EF_RUNTIME",
+        "value": 400
+      }
+    },
+    {
+      "name": "svs-scalar-trained",
+      "algorithm": "SVS-VAMANA",
+      "create_params": {
+        "GRAPH_MAX_DEGREE": 64,
+        "CONSTRUCTION_WINDOW_SIZE": 200,
+        "COMPRESSION": "LVQ8",
+        "TRAINING_THRESHOLD": 10240
+      },
+      "expected_schema": {
+        "graph_max_degree": 64,
+        "construction_window_size": 200,
+        "compression": "GlobalSQ8",
+        "training_threshold": 10240
+      },
+      "expected_pre": "accumulating",
+      "query_param": {
+        "name": "SEARCH_WINDOW_SIZE",
+        "value": 400
+      }
+    }
+  ]
+}

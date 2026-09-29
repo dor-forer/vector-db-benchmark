@@ -444,6 +444,12 @@ clean:
 	@echo "=== Cleaning Rust build artifacts ==="
 	cargo clean
 
+# Dedicated Redis Search vector transition probe (Python; no native build).
+# Example: make benchmark-redis-transition TRANSITION_ARGS="--cases ... --vectors ..."
+.PHONY: benchmark-redis-transition
+benchmark-redis-transition:
+	python3 scripts/redis_transition.py $(TRANSITION_ARGS)
+
 # ============================================================
 # HELP
 # ============================================================
@@ -465,6 +471,7 @@ help:
 	@echo "  make check-strict      - Run linting with warnings as errors"
 	@echo "  make fmt               - Auto-format Rust code"
 	@echo "  make benchmark         - Run Rust microbenchmarks (HDF5, NPY, JSONL)"
+	@echo "  make benchmark-redis-transition TRANSITION_ARGS=... - Run dedicated Redis transition probe"
 	@echo ""
 	@echo "  Integration Tests (each starts/stops Docker containers):"
 	@echo "  make integration-test                - Redis"
